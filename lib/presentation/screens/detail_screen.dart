@@ -1,0 +1,336 @@
+import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+import '../../core/app_route.dart';
+import '../../data/models/movie_model.dart';
+import '../../data/repositories/favorite_repository.dart';
+import '../../data/repositories/movie_repository.dart';
+
+class DetailScreen extends StatefulWidget {
+  final Movie movie;
+
+  const DetailScreen({super.key, required this.movie});
+
+  @override
+  State<DetailScreen> createState() => _DetailScreenState();
+}
+
+class _DetailScreenState extends State<DetailScreen> {
+  final FavoriteRepository _favoriteRepository = FavoriteRepository();
+  final MovieRepository _movieRepository = MovieRepository();
+
+  YoutubePlayerController? _youtubeController;
+  List<Movie> _similarMovies = [];
+  bool _isFavorite = false;
+  bool _isLoadingTrailer = true;
+  bool _isLoadingSimilar = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkFavoriteStatus();
+    _loadTrailer();
+    _loadSimilarMovies();
+  }
+
+  @override
+  void dispose() {
+    _youtubeController?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _checkFavoriteStatus() async {
+    final isFav = await _favoriteRepository.isFavorite(widget.movie.id);
+    if (mounted) {
+      setState(() {
+        _isFavorite = isFav;
+      });
+    }
+  }
+
+  Future<void> _loadTrailer() async {
+    final key = await _movieRepository.getMovieTrailerKey(widget.movie.id);
+    if (mounted) {
+      if (key != null && key.isNotEmpty) {
+        _youtubeController = YoutubePlayerController(
+          initialVideoId: key,
+          flags: const YoutubePlayerFlags(
+            autoPlay: false,
+            mute: false,
+            isLive: false,
+            forceHD: false,
+            enableCaption: true,
+          ),
+        );
+      }
+      setState(() {
+        _isLoadingTrailer = false;
+      });
+    }
+  }
+
+  Future<void> _loadSimilarMovies() async {
+    try {
+      final list = await _movieRepository.getSimilarMovies(widget.movie.id);
+      if (mounted) {
+        setState(() {
+          _similarMovies = list;
+          _isLoadingSimilar = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isLoadingSimilar = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    final newStatus = await _favoriteRepository.toggleFavorite(widget.movie);
+    if (mounted) {
+      setState(() {
+        _isFavorite = newStatus;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            newStatus
+                ? 'Đã thêm vào danh sách Yêu thích!'
+                : 'Đã xóa khỏi danh sách Yêu thích!',
+          ),
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          widget.movie.title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(
+              _isFavorite ? Icons.favorite : Icons.favorite_border,
+              color: _isFavorite ? Colors.red : theme.iconTheme.color,
+            ),
+            onPressed: _toggleFavorite,
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 1. Trailer hoặc Backdrop Image
+            _isLoadingTrailer
+                ? Container(
+              height: 220,
+              color: theme.brightness == Brightness.dark
+                  ? Colors.black
+                  : Colors.grey[300],
+              child: const Center(
+                child: CircularProgressIndicator(color: Colors.redAccent),
+              ),
+            )
+                : _youtubeController != null
+                ? YoutubePlayer(
+              controller: _youtubeController!,
+              showVideoProgressIndicator: true,
+              progressIndicatorColor: Colors.redAccent,
+              progressColors: const ProgressBarColors(
+                playedColor: Colors.red,
+                handleColor: Colors.redAccent,
+              ),
+            )
+                : Image.network(
+              widget.movie.fullBackdropPath,
+              height: 220,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => Container(
+                height: 220,
+                color: Colors.grey[800],
+                child: const Icon(Icons.movie, size: 50),
+              ),
+            ),
+
+            // 2. Thông tin chi tiết phim
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.star, color: Colors.amber, size: 24),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${widget.movie.voteAverage.toStringAsFixed(1)} / 10',
+                        style: TextStyle(
+                          color: theme.textTheme.bodyLarge?.color,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Spacer(),
+                      if (widget.movie.releaseDate != null &&
+                          widget.movie.releaseDate!.isNotEmpty)
+                        Text(
+                          'Khởi chiếu: ${widget.movie.releaseDate}',
+                          style: TextStyle(color: theme.hintColor),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Nội dung phim',
+                    style: TextStyle(
+                      color: theme.textTheme.titleLarge?.color,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    widget.movie.overview.isNotEmpty
+                        ? widget.movie.overview
+                        : 'Chưa có mô tả cho bộ phim này.',
+                    style: TextStyle(
+                      color: theme.textTheme.bodyMedium?.color
+                          ?.withValues(alpha: 0.8) ??
+                          theme.hintColor,
+                      fontSize: 15,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const Divider(height: 32, thickness: 1),
+
+            // 3. Danh sách Phim Tương Tự
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Text(
+                'Phim tương tự',
+                style: TextStyle(
+                  color: theme.textTheme.titleLarge?.color,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            if (_isLoadingSimilar)
+              const SizedBox(
+                height: 180,
+                child: Center(
+                  child: CircularProgressIndicator(color: Colors.redAccent),
+                ),
+              )
+            else if (_similarMovies.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Text(
+                  'Không có phim gợi ý liên quan.',
+                  style: TextStyle(color: theme.hintColor),
+                ),
+              )
+            else
+              SizedBox(
+                height: 200,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  itemCount: _similarMovies.length,
+                  itemBuilder: (context, index) {
+                    final similarMovie = _similarMovies[index];
+                    return GestureDetector(
+                      onTap: () {
+                        // Mở màn hình DetailScreen mới cho phim tương tự vừa chọn
+                        Navigator.pushReplacementNamed(
+                          context,
+                          AppRoutes.detail,
+                          arguments: similarMovie,
+                        );
+                      },
+                      child: Container(
+                        width: 120,
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: CachedNetworkImage(
+                                  imageUrl: similarMovie.fullPosterPath,
+                                  width: 120,
+                                  fit: BoxFit.cover,
+                                  placeholder: (context, url) => Container(
+                                    color: theme.brightness == Brightness.dark
+                                        ? Colors.grey[900]
+                                        : Colors.grey[300],
+                                  ),
+                                  errorWidget: (context, url, error) =>
+                                      Container(
+                                        color: Colors.grey[800],
+                                        child: const Icon(Icons.broken_image),
+                                      ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              similarMovie.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.star,
+                                  color: Colors.amber,
+                                  size: 14,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  similarMovie.voteAverage.toStringAsFixed(1),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: theme.hintColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+}
