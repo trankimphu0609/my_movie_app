@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:my_movie_app/core/language_controller.dart';
+import 'package:my_movie_app/data/models/review_model.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import '../../core/app_route.dart';
 import '../../core/app_strings.dart';
@@ -26,9 +27,12 @@ class _DetailScreenState extends State<DetailScreen> {
   final langCode = LanguageController.instance.locale.languageCode;
 
   List<Movie> _similarMovies = [];
+  List<Review> _reviews = [];
+
   bool _isFavorite = false;
   bool _isLoadingTrailer = true;
   bool _isLoadingSimilar = true;
+  bool _isLoadingReviews = true;
 
   @override
   void initState() {
@@ -36,6 +40,7 @@ class _DetailScreenState extends State<DetailScreen> {
     _checkFavoriteStatus();
     _loadTrailer();
     _loadSimilarMovies();
+    _loadReviews();
   }
 
   @override
@@ -60,7 +65,7 @@ class _DetailScreenState extends State<DetailScreen> {
         _youtubeController = YoutubePlayerController(
           initialVideoId: key,
           flags: const YoutubePlayerFlags(
-            autoPlay: false,
+            autoPlay: true, // khi keo tu home sang detail thi no tu dong mo
             mute: false,
             isLive: false,
             forceHD: false,
@@ -112,6 +117,25 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   @override
+  Future<void> _loadReviews() async {
+    try {
+      final list = await _movieRepository.getMovieReviews(widget.movie.id);
+      if (mounted) {
+        setState(() {
+          _reviews = list;
+          _isLoadingReviews = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isLoadingReviews = false;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final langCode = LanguageController.instance.locale.languageCode;
@@ -129,7 +153,7 @@ class _DetailScreenState extends State<DetailScreen> {
             centerTitle: true,
             floating: true,
             snap: true,
-            pinned: false, // 👈 Đặt false để khi kéo lên nó ẩn luôn khỏi màn hình
+            pinned: false,
             actions: [
               IconButton(
                 icon: Icon(
@@ -340,6 +364,113 @@ class _DetailScreenState extends State<DetailScreen> {
                       },
                     ),
                   ),
+
+                const Divider(height: 32, thickness: 1),
+
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Text(
+                    AppStrings.get('reviews', langCode),
+                    style: TextStyle(
+                      color: theme.textTheme.titleLarge?.color,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                _isLoadingReviews
+                    ? const SizedBox(
+                  height: 100,
+                  child: Center(
+                    child: CircularProgressIndicator(color: Colors.redAccent),
+                  ),
+                )
+                    : _reviews.isEmpty
+                    ? Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Text(
+                    AppStrings.get('no_reviews', langCode),
+                    style: TextStyle(color: theme.hintColor),
+                  ),
+                )
+                    : ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(), // Tránh xung đột cuộn với CustomScrollView
+                  itemCount: _reviews.length > 5 ? 5 : _reviews.length, // Hiển thị tối đa 5 đánh giá đầu tiên
+                  itemBuilder: (context, index) {
+                    final review = _reviews[index];
+                    return Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: theme.brightness == Brightness.dark
+                            ? Colors.grey[900]
+                            : Colors.grey[100],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 16,
+                                backgroundColor: Colors.redAccent,
+                                child: Text(
+                                  review.author.isNotEmpty
+                                      ? review.author[0].toUpperCase()
+                                      : 'A',
+                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  review.author,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.textTheme.bodyLarge?.color,
+                                  ),
+                                ),
+                              ),
+                              if (review.rating != null)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.amber.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.star, color: Colors.amber, size: 14),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        review.rating.toString(),
+                                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            review.content,
+                            maxLines: 4,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.8),
+                              fontSize: 13,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
                 const SizedBox(height: 40),
               ],
             ),

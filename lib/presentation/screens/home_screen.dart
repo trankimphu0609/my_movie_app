@@ -28,6 +28,9 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoadingGenres = true;
   bool _hasMore = true;
 
+  // Biến lưu trạng thái sắp xếp hiện tại
+  String _currentSort = 'default';
+
   @override
   void initState() {
     super.initState();
@@ -99,6 +102,9 @@ class _HomeScreenState extends State<HomeScreen> {
           _isLoading = false;
           if (movies.length < 20) _hasMore = false;
         });
+        if (_currentSort != 'default') {
+          _sortMovies(_currentSort, applyState: false);
+        }
       }
     } catch (_) {
       if (mounted) setState(() => _isLoading = false);
@@ -128,6 +134,9 @@ class _HomeScreenState extends State<HomeScreen> {
           }
           _isLoadingMore = false;
         });
+        if (_currentSort != 'default') {
+          _sortMovies(_currentSort, applyState: false);
+        }
       }
     } catch (_) {
       if (mounted) setState(() => _isLoadingMore = false);
@@ -143,6 +152,34 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadMovies();
   }
 
+  void _sortMovies(String sortType, {bool applyState = true}) {
+    if (applyState) {
+      setState(() {
+        _currentSort = sortType;
+      });
+    }
+
+    if (sortType == 'newest') {
+      _movies.sort((a, b) {
+        final dateA = DateTime.tryParse(a.releaseDate ?? '') ?? DateTime(1900);
+        final dateB = DateTime.tryParse(b.releaseDate ?? '') ?? DateTime(1900);
+        return dateB.compareTo(dateA);
+      });
+    } else if (sortType == 'oldest') {
+      _movies.sort((a, b) {
+        final dateA = DateTime.tryParse(a.releaseDate ?? '') ?? DateTime(1900);
+        final dateB = DateTime.tryParse(b.releaseDate ?? '') ?? DateTime(1900);
+        return dateA.compareTo(dateB);
+      });
+    } else if (sortType == 'rating_high') {
+      _movies.sort((a, b) => b.voteAverage.compareTo(a.voteAverage));
+    } else {
+      if (applyState) {
+        _loadMovies();
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -153,102 +190,129 @@ class _HomeScreenState extends State<HomeScreen> {
       body: CustomScrollView(
         controller: _scrollController,
         slivers: [
-          // AppBar và Thanh tìm kiếm trượt ẩn/hiện
           SliverAppBar(
             title: Text(AppStrings.get('trending', langCode), style: const TextStyle(fontWeight: FontWeight.bold)),
             centerTitle: true,
             floating: true,
             snap: true,
             pinned: false,
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(70),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: AppStrings.get('search_hint', langCode),
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: _searchController.text.isNotEmpty ? IconButton(
-                                          icon: const Icon(Icons.clear),
-                                          onPressed: () {
-                                            _searchController.clear();
-                                            setState(() => _selectedGenreId = null);
-                                            _loadMovies();
-                                          },
-                              ) : null,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                    filled: true,
-                    fillColor: theme.cardColor,
+            actions: [
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.sort),
+                tooltip: AppStrings.get('sort_by', langCode),
+                onSelected: (value) => _sortMovies(value),
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 'default',
+                    child: Text(AppStrings.get('trending', langCode)),
                   ),
-                  onChanged: (value) {
-                    if (value.trim().isNotEmpty) {
-                      setState(() => _selectedGenreId = null);
-                    }
-                    _loadMovies();
-                  },
-                  onSubmitted: (_) {
-                    setState(() => _selectedGenreId = null);
-                    _loadMovies();
-                  },
-                ),
+                  PopupMenuItem(
+                    value: 'newest',
+                    child: Text(AppStrings.get('sort_newest', langCode)),
+                  ),
+                  PopupMenuItem(
+                    value: 'oldest',
+                    child: Text(AppStrings.get('sort_oldest', langCode)),
+                  ),
+                  PopupMenuItem(
+                    value: 'rating_high',
+                    child: Text(AppStrings.get('sort_rating_high', langCode)),
+                  ),
+                ],
+              ),
+            ],
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(130),
+              child: Column(
+                children: [
+                  // 1. Ô tìm kiếm
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: AppStrings.get('search_hint', langCode),
+                        prefixIcon: const Icon(Icons.search),
+                        suffixIcon: _searchController.text.isNotEmpty ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() => _selectedGenreId = null);
+                            _loadMovies();
+                          },
+                        ) : null,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                        filled: true,
+                        fillColor: theme.cardColor,
+                      ),
+                      onChanged: (value) {
+                        if (value.trim().isNotEmpty) {
+                          setState(() => _selectedGenreId = null);
+                        }
+                        _loadMovies();
+                      },
+                      onSubmitted: (_) {
+                        setState(() => _selectedGenreId = null);
+                        _loadMovies();
+                      },
+                    ),
+                  ),
+
+                  // 2. Thanh thể loại Chips
+                  if (!_isLoadingGenres && _genres.isNotEmpty)
+                    Container(
+                      height: 48,
+                      margin: const EdgeInsets.only(bottom: 8),
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        itemCount: _genres.length + 1,
+                        itemBuilder: (context, index) {
+                          if (index == 0) {
+                            final isSelected = _selectedGenreId == null;
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                              child: ChoiceChip(
+                                label: Text(AppStrings.get('all', langCode)),
+                                selected: isSelected,
+                                selectedColor: Colors.redAccent,
+                                backgroundColor: isDarkMode ? const Color(0xFF1E1E1E) : Colors.grey[200],
+                                showCheckmark: false,
+                                labelStyle: TextStyle(
+                                  color: isSelected ? Colors.white : theme.textTheme.bodyMedium?.color,
+                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                ),
+                                onSelected: (_) => _onGenreSelected(null),
+                              ),
+                            );
+                          }
+
+                          final genre = _genres[index - 1];
+                          final isSelected = _selectedGenreId == genre['id'];
+
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: ChoiceChip(
+                              label: Text(genre['name']),
+                              selected: isSelected,
+                              selectedColor: Colors.redAccent,
+                              backgroundColor: isDarkMode ? const Color(0xFF1E1E1E) : Colors.grey[200],
+                              showCheckmark: false,
+                              labelStyle: TextStyle(
+                                color: isSelected ? Colors.white : theme.textTheme.bodyMedium?.color,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              ),
+                              onSelected: (_) => _onGenreSelected(genre['id']),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                ],
               ),
             ),
           ),
-
-          // Thanh Thể loại Chips
-          if (!_isLoadingGenres && _genres.isNotEmpty)
-            SliverToBoxAdapter(
-              child: Container(
-                height: 48,
-                margin: const EdgeInsets.symmetric(vertical: 8),
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  itemCount: _genres.length + 1,
-                  itemBuilder: (context, index) {
-                    if (index == 0) {
-                      final isSelected = _selectedGenreId == null;
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: ChoiceChip(
-                          label: Text(AppStrings.get('all', langCode)),
-                          selected: isSelected,
-                          selectedColor: Colors.redAccent,
-                          backgroundColor: isDarkMode ? const Color(0xFF1E1E1E) : Colors.grey[200],
-                          showCheckmark: false,
-                          labelStyle: TextStyle(
-                            color: isSelected ? Colors.white : theme.textTheme.bodyMedium?.color,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                          ),
-                          onSelected: (_) => _onGenreSelected(null),
-                        ),
-                      );
-                    }
-
-                    final genre = _genres[index - 1];
-                    final isSelected = _selectedGenreId == genre['id'];
-
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: ChoiceChip(
-                        label: Text(genre['name']),
-                        selected: isSelected,
-                        selectedColor: Colors.redAccent,
-                        backgroundColor: isDarkMode ? const Color(0xFF1E1E1E) : Colors.grey[200],
-                        showCheckmark: false,
-                        labelStyle: TextStyle(
-                          color: isSelected ? Colors.white : theme.textTheme.bodyMedium?.color,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                        ),
-                        onSelected: (_) => _onGenreSelected(genre['id']),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
 
           // Nội dung lưới hiển thị phim (SliverGrid)
           _isLoading
@@ -260,7 +324,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Center(child: Text(AppStrings.get('no_movies', langCode), style: TextStyle(color: theme.hintColor))),
           )
               : SliverPadding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 100),
             sliver: SliverGrid(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
@@ -328,7 +392,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
 
-          // Vòng quay tải thêm trang dưới cùng
           if (_isLoadingMore)
             const SliverToBoxAdapter(
               child: Padding(

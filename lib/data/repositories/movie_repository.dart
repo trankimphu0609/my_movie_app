@@ -1,9 +1,12 @@
+import 'dart:convert';
 import 'dart:ui';
 
 import 'package:dio/dio.dart';
+import 'package:http/http.dart' as http;
 import 'package:my_movie_app/core/constants.dart';
 import 'package:my_movie_app/core/language_controller.dart';
 import 'package:my_movie_app/data/models/movie_model.dart';
+import 'package:my_movie_app/data/models/review_model.dart';
 
 class MovieRepository {
   final Dio _dio = Dio(
@@ -157,6 +160,17 @@ class MovieRepository {
         return results.map((json) => Movie.fromJson(json)).toList();
       }
     } catch (_) {}
+    return [];
+  }
+
+  Future<List<Review>> getMovieReviews(int movieId) async {
+    final url = Uri.parse('https://api.themoviedb.org/3/movie/$movieId/reviews?api_key=$ApiConstants.apiKey');
+    final response = await http.get(url);
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final List results = data['results'] ?? [];
+      return results.map((e) => Review.fromJson(e)).toList();
+    }
     return [];
   }
 }
