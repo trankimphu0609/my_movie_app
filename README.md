@@ -33,14 +33,14 @@ A mobile movie application built with **Flutter**, using the **TMDB API** to fet
 ```text
 lib/
 │
-├── core/               # General configurations (App Routes, Constants, App Theme)
+├── core/               # General configurations
 ├── data/               # Data Layer
 │   ├── models/         # Movie model
-│   └── repositories/   # MovieRepository, FavoriteRepository for API and local storage
+│   └── repositories/   # API and local storage
 │
 ├── logic/              # App State Management (ThemeCubit, BLoC...)
 │   ├── cubits/
 │
 └── presentation/       # Presentation Layer (UI)
     ├── bloc/           # MovieBloc, Event, State
-    └── screens/        # Screens (HomeScreen, DetailScreen, FavoriteScreen, SettingsScreen, MainScreen)
+    └── screens/        # Screens
