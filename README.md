@@ -1,4 +1,4 @@
-# 🎬 Flutter Movie App
+<img width="1280" height="2856" alt="image" src="https://github.com/user-attachments/assets/67036884-e0fe-43c6-841c-6764ce4cc122" /># 🎬 Flutter Movie App
 
 A mobile movie application built with **Flutter**, using the **TMDB API** to fetch trending movies, search, watch trailers, manage favorites, and support multiple themes (Dark/Light Mode).
 
@@ -44,3 +44,5 @@ lib/
 └── presentation/       # Presentation Layer (UI)
     ├── bloc/           # MovieBloc, Event, State
     └── screens/        # Screens
+
+<img width="1280" height="2856" alt="image" src="https://github.com/user-attachments/assets/5cb28e0c-5e35-42df-a09b-4b6027a6627b" />
