@@ -1,5 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:my_movie_app/core/app_strings.dart';
+import 'package:my_movie_app/core/language_controller.dart';
 import 'home_screen.dart';
 import 'favorite_screen.dart';
 import 'setting_screen.dart';
@@ -16,10 +18,13 @@ class _MainScreenState extends State<MainScreen> {
 
   final GlobalKey<FavoriteScreenState> _favoriteScreenKey = GlobalKey<FavoriteScreenState>();
 
+
   @override
   Widget build(BuildContext context) {
-    // Kiểm tra xem máy đang ở chế độ Sáng hay Tối
+
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    final langCode = LanguageController.instance.locale.languageCode;
 
     final List<Widget> screens = [
       const HomeScreen(),
@@ -71,21 +76,21 @@ class _MainScreenState extends State<MainScreen> {
                         index: 0,
                         icon: Icons.movie_outlined,
                         activeIcon: Icons.movie,
-                        label: 'Trang chủ',
+                        label: AppStrings.get('home', langCode),
                         isDarkMode: isDarkMode,
                       ),
                       _buildNavItem(
                         index: 1,
                         icon: Icons.favorite_border,
                         activeIcon: Icons.favorite,
-                        label: 'Yêu thích',
+                        label: AppStrings.get('favorite', langCode),
                         isDarkMode: isDarkMode,
                       ),
                       _buildNavItem(
                         index: 2,
                         icon: Icons.settings_outlined,
                         activeIcon: Icons.settings,
-                        label: 'Cài đặt',
+                        label: AppStrings.get('settings', langCode),
                         isDarkMode: isDarkMode,
                       ),
                     ],

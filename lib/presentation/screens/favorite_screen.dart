@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:my_movie_app/core/language_controller.dart';
 import '../../core/app_route.dart';
+import '../../core/app_strings.dart';
 import '../../data/models/movie_model.dart';
 import '../../data/repositories/favorite_repository.dart';
 
@@ -13,8 +15,10 @@ class FavoriteScreen extends StatefulWidget {
 }
 
 class FavoriteScreenState extends State<FavoriteScreen> {
+
   final FavoriteRepository _favoriteRepository = FavoriteRepository();
   final ScrollController _scrollController = ScrollController();
+
   List<Movie> _favoriteMovies = [];
   bool _isLoading = true;
 
@@ -49,6 +53,7 @@ class FavoriteScreenState extends State<FavoriteScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final langCode = LanguageController.instance.locale.languageCode;
 
     return Scaffold(
       body: CustomScrollView(
@@ -56,7 +61,7 @@ class FavoriteScreenState extends State<FavoriteScreen> {
         slivers: [
           // AppBar tự động ẩn/hiện khi cuộn
           SliverAppBar(
-            title: const Text('Phim Yêu Thích', style: TextStyle(fontWeight: FontWeight.bold)),
+            title: Text(AppStrings.get('favorite', langCode), style: TextStyle(fontWeight: FontWeight.bold)),
             centerTitle: true,
             floating: true,
             snap: true,
@@ -74,7 +79,7 @@ class FavoriteScreenState extends State<FavoriteScreen> {
             SliverFillRemaining(
               child: Center(
                 child: Text(
-                  'Chưa có phim nào trong danh sách yêu thích!',
+                  AppStrings.get('no_favorites', langCode),
                   style: TextStyle(color: theme.hintColor, fontSize: 15),
                 ),
               ),

@@ -6,10 +6,12 @@ class LanguageController extends ChangeNotifier {
   factory LanguageController() => instance;
   LanguageController._internal();
 
-  Locale _locale = const Locale('vi'); // Mặc định là Tiếng Việt
+  Locale _locale = const Locale('vi');
   Locale get locale => _locale;
 
-  // Tải ngôn ngữ đã lưu lần trước khi mở app
+  // Danh sách các ngôn ngữ app hỗ trợ
+  final List<String> supportedLanguages = ['vi', 'en', 'zh', 'ja', 'ko'];
+
   Future<void> loadLanguage() async {
     final prefs = await SharedPreferences.getInstance();
     final code = prefs.getString('selected_language') ?? 'vi';
@@ -17,9 +19,10 @@ class LanguageController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Đổi ngôn ngữ và lưu lại
   Future<void> changeLanguage(String languageCode) async {
+    if (!supportedLanguages.contains(languageCode)) return;
     if (_locale.languageCode == languageCode) return;
+
     _locale = Locale(languageCode);
     notifyListeners();
 

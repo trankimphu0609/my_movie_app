@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:my_movie_app/core/language_controller.dart';
 import '../../core/app_route.dart';
+import '../../core/app_strings.dart';
 import '../../data/models/movie_model.dart';
 import '../../data/repositories/movie_repository.dart';
 
@@ -32,10 +34,12 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadGenres();
     _loadMovies();
     _scrollController.addListener(_onScroll);
+    LanguageController.instance.addListener(_onLanguageChanged);
   }
 
   @override
   void dispose() {
+    LanguageController.instance.removeListener(_onLanguageChanged);
     _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
@@ -48,6 +52,13 @@ class _HomeScreenState extends State<HomeScreen> {
         _hasMore &&
         !_isLoading) {
       _loadMoreMovies();
+    }
+  }
+
+  void _onLanguageChanged() {
+    if (mounted) {
+      _loadGenres();
+      _loadMovies();
     }
   }
 
@@ -136,6 +147,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
+    final langCode = LanguageController.instance.locale.languageCode;
 
     return Scaffold(
       body: CustomScrollView(
@@ -143,7 +155,7 @@ class _HomeScreenState extends State<HomeScreen> {
         slivers: [
           // AppBar và Thanh tìm kiếm trượt ẩn/hiện
           SliverAppBar(
-            title: const Text('Phim Hot', style: TextStyle(fontWeight: FontWeight.bold)),
+            title: Text(AppStrings.get('trending', langCode), style: const TextStyle(fontWeight: FontWeight.bold)),
             centerTitle: true,
             floating: true,
             snap: true,
@@ -155,7 +167,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: TextField(
                   controller: _searchController,
                   decoration: InputDecoration(
-                    hintText: 'Tìm kiếm phim...',
+                    hintText: AppStrings.get('search_hint', langCode),
                     prefixIcon: const Icon(Icons.search),
                     suffixIcon: _searchController.text.isNotEmpty ? IconButton(
                                           icon: const Icon(Icons.clear),
@@ -201,7 +213,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 4),
                         child: ChoiceChip(
-                          label: const Text('Tất cả'),
+                          label: Text(AppStrings.get('all', langCode)),
                           selected: isSelected,
                           selectedColor: Colors.redAccent,
                           backgroundColor: isDarkMode ? const Color(0xFF1E1E1E) : Colors.grey[200],
@@ -245,7 +257,7 @@ class _HomeScreenState extends State<HomeScreen> {
           )
               : _movies.isEmpty
               ? SliverFillRemaining(
-            child: Center(child: Text('Không tìm thấy phim nào!', style: TextStyle(color: theme.hintColor))),
+            child: Center(child: Text(AppStrings.get('no_movies', langCode), style: TextStyle(color: theme.hintColor))),
           )
               : SliverPadding(
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),

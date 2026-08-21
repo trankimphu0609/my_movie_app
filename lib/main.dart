@@ -29,7 +29,7 @@ class _MyAppState extends State<MyApp> {
     super.initState();
 
     LanguageController.instance.addListener(() {
-      setState(() {});
+      setState(() {}); // Load  lai app khi doi ngon ngu
     });
   }
 
