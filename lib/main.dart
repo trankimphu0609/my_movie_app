@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'core/app_route.dart';
 import 'core/app_theme.dart';
 import 'data/repositories/movie_repository.dart';
@@ -9,6 +10,7 @@ import 'presentation/bloc/movie_event.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   runApp(const MyApp());
 }
 
