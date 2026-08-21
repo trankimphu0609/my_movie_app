@@ -39,6 +39,7 @@ lib/
 │   └── repositories/   # MovieRepository, FavoriteRepository for API and local storage
 │
 ├── logic/              # App State Management (ThemeCubit, BLoC...)
+│   ├── cubits/
 │
 └── presentation/       # Presentation Layer (UI)
     ├── bloc/           # MovieBloc, Event, State
