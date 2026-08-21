@@ -26,6 +26,7 @@ class FavoriteScreenState extends State<FavoriteScreen> {
   void initState() {
     super.initState();
     loadFavorites();
+    LanguageController.instance.addListener(_onLanguageChanged);
   }
 
   @override
@@ -36,6 +37,7 @@ class FavoriteScreenState extends State<FavoriteScreen> {
 
   @override
   void dispose() {
+    LanguageController.instance.addListener(_onLanguageChanged);
     _scrollController.dispose();
     super.dispose();
   }
@@ -47,6 +49,12 @@ class FavoriteScreenState extends State<FavoriteScreen> {
         _favoriteMovies = list;
         _isLoading = false;
       });
+    }
+  }
+
+  void _onLanguageChanged() {
+    if (mounted) {
+      setState(() {});
     }
   }
 

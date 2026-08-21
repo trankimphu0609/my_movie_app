@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:ui';
 
 import 'package:dio/dio.dart';
 import 'package:http/http.dart' as http;
@@ -17,7 +16,8 @@ class MovieRepository {
     ),
   );
 
-  String getTmdbLanguage(String code) {
+  String _getTmdbLanguage() {
+    final code = LanguageController.instance.locale.languageCode;
     switch (code) {
       case 'vi': return 'vi-VN';
       case 'zh': return 'zh-CN';
@@ -27,15 +27,14 @@ class MovieRepository {
     }
   }
 
-  // 1. Lấy danh sách phim phổ biến (có hỗ trợ phân trang & tiếng Việt)
+  // 1. Lấy danh sách phim phổ biến
   Future<List<Movie>> getPopularMovies({int page = 1}) async {
-    final langCode = LanguageController.instance.locale.languageCode;
     try {
       final response = await _dio.get(
         '/movie/popular',
         queryParameters: {
           'api_key': ApiConstants.apiKey,
-          'language': getTmdbLanguage(langCode),
+          'language': _getTmdbLanguage(),
           'page': page,
         },
       );
@@ -51,18 +50,16 @@ class MovieRepository {
     }
   }
 
-  // 2. Tìm kiếm phim theo từ khóa (có tiếng Việt)
+  // 2. Tìm kiếm phim theo từ khóa
   Future<List<Movie>> searchMovies(String query) async {
     if (query.trim().isEmpty) return [];
-
-    final langCode = LanguageController.instance.locale.languageCode;
 
     try {
       final response = await _dio.get(
         '/search/movie',
         queryParameters: {
           'api_key': ApiConstants.apiKey,
-          'language': getTmdbLanguage(langCode),
+          'language': _getTmdbLanguage(),
           'query': query,
         },
       );
@@ -100,13 +97,12 @@ class MovieRepository {
 
   // 4. Lấy danh sách Thể loại phim
   Future<List<Map<String, dynamic>>> getGenres() async {
-    final langCode = LanguageController.instance.locale.languageCode;
     try {
       final response = await _dio.get(
         '/genre/movie/list',
         queryParameters: {
           'api_key': ApiConstants.apiKey,
-          'language': getTmdbLanguage(langCode),
+          'language': _getTmdbLanguage(),
         },
       );
 
@@ -119,13 +115,12 @@ class MovieRepository {
 
   // 5. Lấy danh sách phim theo ID thể loại (có phân trang)
   Future<List<Movie>> getMoviesByGenre(int genreId, {int page = 1}) async {
-    final langCode = LanguageController.instance.locale.languageCode;
     try {
       final response = await _dio.get(
         '/discover/movie',
         queryParameters: {
           'api_key': ApiConstants.apiKey,
-          'language': getTmdbLanguage(langCode),
+          'language': _getTmdbLanguage(),
           'with_genres': genreId,
           'page': page,
         },
@@ -144,13 +139,12 @@ class MovieRepository {
 
   // 6. Lấy danh sách Phim tương tự / Gợi ý
   Future<List<Movie>> getSimilarMovies(int movieId) async {
-    final langCode = LanguageController.instance.locale.languageCode;
     try {
       final response = await _dio.get(
         '/movie/$movieId/similar',
         queryParameters: {
           'api_key': ApiConstants.apiKey,
-          'language': getTmdbLanguage(langCode),
+          'language': _getTmdbLanguage(),
           'page': 1,
         },
       );

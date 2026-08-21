@@ -116,7 +116,6 @@ class _DetailScreenState extends State<DetailScreen> {
     }
   }
 
-  @override
   Future<void> _loadReviews() async {
     try {
       final list = await _movieRepository.getMovieReviews(widget.movie.id);
