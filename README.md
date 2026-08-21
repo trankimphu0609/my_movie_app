@@ -50,5 +50,5 @@ lib/
 
 ## 📱 App Screenshots
 
-<img width="120" height="2856" alt="image" src="https://github.com/user-attachments/assets/0d60fcc9-37ee-49ad-bec8-cb33db9421c0" />
+<img width="120" height="500" alt="image" src="https://github.com/user-attachments/assets/0d60fcc9-37ee-49ad-bec8-cb33db9421c0" />
 
