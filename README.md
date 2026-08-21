@@ -45,3 +45,13 @@ lib/
 └── presentation/      # Presentation Layer (UI)
     ├── bloc/          # MovieBloc, Event, State
     └── screens/       # Screens
+
+---
+
+## 📱 App Screenshots
+
+<p align="center">
+  <img width="300" alt="image 1" src="https://github.com/user-attachments/assets/67036884-e0fe-43c6-841c-6764ce4cc122" />
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img width="300" alt="image 2" src="https://github.com/user-attachments/assets/5cb28e0c-5e35-42df-a09b-4b6027a6627b" />
+</p>
