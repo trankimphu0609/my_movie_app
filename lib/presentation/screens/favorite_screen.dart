@@ -13,6 +13,7 @@ class FavoriteScreen extends StatefulWidget {
 
 class _FavoriteScreenState extends State<FavoriteScreen> {
   final FavoriteRepository _favoriteRepository = FavoriteRepository();
+  final ScrollController _scrollController = ScrollController();
   List<Movie> _favoriteMovies = [];
   bool _isLoading = true;
 
@@ -20,6 +21,12 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
   void initState() {
     super.initState();
     _loadFavorites();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadFavorites() async {
@@ -34,83 +41,101 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Lấy Theme động từ context
     final theme = Theme.of(context);
 
     return Scaffold(
-      // Bỏ backgroundColor cố định
-      appBar: AppBar(
-        // Bỏ backgroundColor cố định
-        title: const Text('Phim Yêu Thích'),
-        centerTitle: true,
-      ),
-      body: _isLoading
-          ? const Center(
-        child: CircularProgressIndicator(color: Colors.redAccent),
-      )
-          : _favoriteMovies.isEmpty
-          ? Center(
-        child: Text(
-          'Chưa có phim nào trong danh sách yêu thích!',
-          style: TextStyle(color: theme.hintColor),
-        ),
-      )
-          : ListView.builder(
-        padding: const EdgeInsets.all(12),
-        itemCount: _favoriteMovies.length,
-        itemBuilder: (context, index) {
-          final movie = _favoriteMovies[index];
-          return Card(
-            color: theme.cardColor, // Dùng màu card động theo Theme
-            margin: const EdgeInsets.only(bottom: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: ListTile(
-              leading: ClipRRect(
-                borderRadius: BorderRadius.circular(6),
-                child: CachedNetworkImage(
-                  imageUrl: movie.fullPosterPath,
-                  width: 50,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(
-                    width: 50,
-                    color: theme.brightness == Brightness.dark
-                        ? Colors.grey[900]
-                        : Colors.grey[300],
-                  ),
-                  errorWidget: (context, url, error) =>
-                  const Icon(Icons.error, color: Colors.red),
+      body: CustomScrollView(
+        controller: _scrollController,
+        slivers: [
+          // AppBar tự động ẩn/hiện khi cuộn
+          SliverAppBar(
+            title: const Text('Phim Yêu Thích', style: TextStyle(fontWeight: FontWeight.bold)),
+            centerTitle: true,
+            floating: true,
+            snap: true,
+            pinned: false,
+          ),
+
+          // Nội dung hiển thị bên dưới
+          if (_isLoading)
+            const SliverFillRemaining(
+              child: Center(
+                child: CircularProgressIndicator(color: Colors.redAccent),
+              ),
+            )
+          else if (_favoriteMovies.isEmpty)
+            SliverFillRemaining(
+              child: Center(
+                child: Text(
+                  'Chưa có phim nào trong danh sách yêu thích!',
+                  style: TextStyle(color: theme.hintColor, fontSize: 15),
                 ),
               ),
-              title: Text(
-                movie.title,
-                style: TextStyle(
-                  color: theme.textTheme.bodyLarge?.color, // Màu chữ dynamic
-                  fontWeight: FontWeight.bold,
-                ),
+            )
+          else
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                  // Thêm padding bọc ngoài để tạo khoảng trống dưới đáy tránh bị BottomBar che
+                  final isLast = index == _favoriteMovies.length - 1;
+                  final movie = _favoriteMovies[index];
+
+                  return Padding(
+                    padding: EdgeInsets.fromLTRB(12, 8, 12, isLast ? 100 : 8),
+                    child: Card(
+                      color: theme.cardColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: ListTile(
+                        leading: ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: CachedNetworkImage(
+                            imageUrl: movie.fullPosterPath,
+                            width: 50,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Container(
+                              width: 50,
+                              color: theme.brightness == Brightness.dark
+                                  ? Colors.grey[900]
+                                  : Colors.grey[300],
+                            ),
+                            errorWidget: (context, url, error) =>
+                            const Icon(Icons.error, color: Colors.red),
+                          ),
+                        ),
+                        title: Text(
+                          movie.title,
+                          style: TextStyle(
+                            color: theme.textTheme.bodyLarge?.color,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        subtitle: Text(
+                          '⭐ ${movie.voteAverage.toStringAsFixed(1)} / 10',
+                          style: TextStyle(color: theme.hintColor),
+                        ),
+                        trailing: Icon(
+                          Icons.arrow_forward_ios,
+                          color: theme.hintColor,
+                          size: 16,
+                        ),
+                        onTap: () async {
+                          await Navigator.pushNamed(
+                            context,
+                            AppRoutes.detail,
+                            arguments: movie,
+                          );
+                          _loadFavorites();
+                        },
+                      ),
+                    ),
+                  );
+                },
+                childCount: _favoriteMovies.length,
               ),
-              subtitle: Text(
-                '⭐ ${movie.voteAverage.toStringAsFixed(1)} / 10',
-                style: TextStyle(color: theme.hintColor),
-              ),
-              trailing: Icon(
-                Icons.arrow_forward_ios,
-                color: theme.hintColor,
-                size: 16,
-              ),
-              onTap: () async {
-                // Mở DetailScreen, sau khi quay lại thì reload lại danh sách
-                await Navigator.pushNamed(
-                  context,
-                  AppRoutes.detail,
-                  arguments: movie,
-                );
-                _loadFavorites();
-              },
             ),
-          );
-        },
+        ],
       ),
     );
   }

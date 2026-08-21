@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Giao diện Sáng (Light)
+  // Light Mode
   static final ThemeData lightTheme = ThemeData(
     brightness: Brightness.light,
     primarySwatch: Colors.red,
@@ -17,19 +17,19 @@ class AppTheme {
     ),
   );
 
-  // Giao diện Tối (Dark)
+  // Dark Mode
   static final ThemeData darkTheme = ThemeData(
     brightness: Brightness.dark,
     primarySwatch: Colors.red,
     scaffoldBackgroundColor: const Color(0xFF121212),
     appBarTheme: const AppBarTheme(
-      backgroundColor: Color(0xFF1F1F1F),
+      backgroundColor: Color(0xFF121212),
       foregroundColor: Colors.white,
       elevation: 0,
     ),
     colorScheme: const ColorScheme.dark(
       primary: Colors.red,
-      surface: Color(0xFF1F1F1F),
+      surface: Color(0xFF121212),
     ),
   );
 }
