@@ -1,4 +1,4 @@
-<img width="1280" height="2856" alt="image" src="https://github.com/user-attachments/assets/67036884-e0fe-43c6-841c-6764ce4cc122" /># 🎬 Flutter Movie App
+# 🎬 Flutter Movie App
 
 A mobile movie application built with **Flutter**, using the **TMDB API** to fetch trending movies, search, watch trailers, manage favorites, and support multiple themes (Dark/Light Mode).
 
@@ -9,11 +9,12 @@ A mobile movie application built with **Flutter**, using the **TMDB API** to fet
 - **🌙 Dark / Light Mode Switching:** Smooth switching between Light and Dark themes using `Bloc`/`Cubit`.
 - **🔥 Popular Movies & Pagination (Infinite Scroll):** Displays a list of popular movies and automatically loads the next page when scrolling to the bottom.
 - **🏷️ Genre Filtering (Genre Chips):** A horizontal scroll bar allowing users to quickly filter movies by genre (Action, Comedy, Horror, Sci-Fi, etc.).
-- **🔍 Smart Search:** Search for movies by keyword with optimized Vietnamese (`vi-VN`) data support.
+- **🔍 Smart Search:** Search for movies by keyword with optimized multilingual data support.
 - **📺 Live Trailer Streaming:** Integrated with `youtube_player_flutter` to play movie trailers directly within the detail screen.
 - **⭐ Similar Movies:** Suggests a horizontal scrolling list of related movies on the detail screen to help users discover more content.
 - **❤️ Favorites Management:** Stores and manages personal favorite movies locally.
 - **🧭 Bottom Navigation Bar:** Modern navigation bar for quick switching between tabs: Home, Favorites, and Settings.
+- **🌐 Multi-language Support:** Supports multiple languages (Vietnamese, English, Chinese, Korean, Japanese).
 
 ---
 
@@ -33,16 +34,14 @@ A mobile movie application built with **Flutter**, using the **TMDB API** to fet
 ```text
 lib/
 │
-├── core/               # General configurations
-├── data/               # Data Layer
-│   ├── models/         # Movie model
-│   └── repositories/   # API and local storage
+├── core/              # General configurations
+├── data/              # Data Layer
+│   ├── models/        # Movie model
+│   └── repositories/  # API and local storage
 │
-├── logic/              # App State Management (ThemeCubit, BLoC...)
-│   ├── cubits/
+├── logic/             # App State Management (ThemeCubit, BLoC...)
+│   └── cubits/
 │
-└── presentation/       # Presentation Layer (UI)
-    ├── bloc/           # MovieBloc, Event, State
-    └── screens/        # Screens
-
-<img width="1280" height="2856" alt="image" src="https://github.com/user-attachments/assets/5cb28e0c-5e35-42df-a09b-4b6027a6627b" />
+└── presentation/      # Presentation Layer (UI)
+    ├── bloc/          # MovieBloc, Event, State
+    └── screens/       # Screens
