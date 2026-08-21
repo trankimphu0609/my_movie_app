@@ -46,7 +46,7 @@ lib/
     ├── bloc/          # MovieBloc, Event, State
     └── screens/       # Screens
 
----
+ ``` 
 
 ## 📱 App Screenshots
 
