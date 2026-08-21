@@ -4,14 +4,15 @@ import '../../core/app_route.dart';
 import '../../data/models/movie_model.dart';
 import '../../data/repositories/favorite_repository.dart';
 
+final GlobalKey<FavoriteScreenState> favoriteScreenKey = GlobalKey<FavoriteScreenState>();
 class FavoriteScreen extends StatefulWidget {
   const FavoriteScreen({super.key});
 
   @override
-  State<FavoriteScreen> createState() => _FavoriteScreenState();
+  State<FavoriteScreen> createState() => FavoriteScreenState();
 }
 
-class _FavoriteScreenState extends State<FavoriteScreen> {
+class FavoriteScreenState extends State<FavoriteScreen> {
   final FavoriteRepository _favoriteRepository = FavoriteRepository();
   final ScrollController _scrollController = ScrollController();
   List<Movie> _favoriteMovies = [];
@@ -20,7 +21,13 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
   @override
   void initState() {
     super.initState();
-    _loadFavorites();
+    loadFavorites();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    loadFavorites();
   }
 
   @override
@@ -29,7 +36,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
     super.dispose();
   }
 
-  Future<void> _loadFavorites() async {
+  Future<void> loadFavorites() async {
     final list = await _favoriteRepository.getFavorites();
     if (mounted) {
       setState(() {
@@ -126,7 +133,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                             AppRoutes.detail,
                             arguments: movie,
                           );
-                          _loadFavorites();
+                          loadFavorites();
                         },
                       ),
                     ),

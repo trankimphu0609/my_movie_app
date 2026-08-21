@@ -1,5 +1,4 @@
 import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
 import 'favorite_screen.dart';
@@ -15,23 +14,25 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = const [
-    HomeScreen(),
-    FavoriteScreen(),
-    SettingScreen(),
-  ];
+  final GlobalKey<FavoriteScreenState> _favoriteScreenKey = GlobalKey<FavoriteScreenState>();
 
   @override
   Widget build(BuildContext context) {
     // Kiểm tra xem máy đang ở chế độ Sáng hay Tối
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
+    final List<Widget> screens = [
+      const HomeScreen(),
+      FavoriteScreen(key: _favoriteScreenKey),
+      const SettingScreen(),
+    ];
+
     return Scaffold(
       body: Stack(
         children: [
           IndexedStack(
             index: _currentIndex,
-            children: _screens,
+            children: screens,
           ),
           Positioned(
             left: 24,
@@ -108,7 +109,13 @@ class _MainScreenState extends State<MainScreen> {
     final isSelected = _currentIndex == index;
 
     return GestureDetector(
-      onTap: () => setState(() => _currentIndex = index),
+      onTap: () {
+        setState(() => _currentIndex = index);
+
+        if (index == 1) {
+          _favoriteScreenKey.currentState?.loadFavorites();
+        }
+      },
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
